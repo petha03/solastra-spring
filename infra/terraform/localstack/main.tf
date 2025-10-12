@@ -22,11 +22,11 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
 }
 
 resource "aws_lambda_function" "solastra_function" {
-  filename         = "${path.module}/../../../application/build/distributions/solastra.zip"
+  filename         = "${path.module}/../../../api/boot/build/distributions/solastra.zip"
   function_name    = "solastra-test"
   role            = aws_iam_role.lambda_execution_role.arn
   handler         = "org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest"
-  source_code_hash = filebase64sha256("${path.module}/../../../application/build/distributions/solastra.zip")
+  source_code_hash = filebase64sha256("${path.module}/../../../api/boot/build/distributions/solastra.zip")
   runtime         = "java21"
   timeout         = 30
   memory_size     = 512

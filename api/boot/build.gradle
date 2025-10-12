@@ -1,37 +1,3 @@
-plugins {
-    id 'java'
-    id 'org.springframework.boot' version '3.5.6'
-    id 'io.spring.dependency-management' version '1.1.7'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
-}
-
-group = 'com.solastra'
-version = '0.0.1-SNAPSHOT'
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
-
-repositories {
-    mavenCentral()
-}
-
-ext {
-    set('springCloudVersion', "2025.0.0")
-}
-
-ext {
-    set('springCloudVersion', "2025.0.0")
-}
-
-dependencyManagement {
-    imports {
-        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-    }
-}
-
 dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter'
@@ -39,8 +5,8 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-function-adapter-aws'
     implementation 'org.springframework.cloud:spring-cloud-function-context'
 
-    implementation 'com.amazonaws:aws-lambda-java-core:1.2.3'
-    implementation 'com.amazonaws:aws-lambda-java-events:3.14.0'
+    implementation 'com.amazonaws:aws-lambda-java-core'
+    implementation 'com.amazonaws:aws-lambda-java-events'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -69,8 +35,8 @@ shadowJar {
     }
 
     manifest {
-        attributes 'Main-Class': 'com.solastra.application.Application'
-        attributes 'Start-Class': 'com.solastra.application.Application'
+        attributes 'Main-Class': 'com.solastra.Api'
+        attributes 'Start-Class': 'com.solastra.Api'
     }
 
     exclude 'META-INF/*.SF'
@@ -89,7 +55,7 @@ tasks.register('buildZip', Zip) {
     destinationDirectory = layout.buildDirectory.dir("distributions")
 }
 
-def localstackDir = file("${projectDir}/../infra/terraform/localstack")
+def localstackDir = file("${projectDir}/../../infra/terraform/localstack")
 
 tasks.register('restartLocalStack', Exec) {
     group = "deployment"
