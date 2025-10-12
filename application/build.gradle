@@ -1,0 +1,122 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.6'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'com.solastra'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    set('springCloudVersion', "2025.0.0")
+}
+
+ext {
+    set('springCloudVersion', "2025.0.0")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+dependencies {
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+
+    implementation 'org.springframework.cloud:spring-cloud-function-adapter-aws'
+    implementation 'org.springframework.cloud:spring-cloud-function-context'
+
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.3'
+    implementation 'com.amazonaws:aws-lambda-java-events:3.14.0'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.bootJar {
+    enabled = false
+}
+
+tasks.jar {
+    enabled = true
+}
+
+shadowJar {
+    archiveFileName = 'solastra.jar'
+    mergeServiceFiles()
+
+    append('META-INF/spring.handlers')
+    append('META-INF/spring.schemas')
+    append('META-INF/spring.tooling')
+    append('META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports')
+
+    transform(com.github.jengelman.gradle.plugins.shadow.transformers.PropertiesFileTransformer) {
+        paths = ['META-INF/spring.factories']
+        mergeStrategy = "append"
+    }
+
+    manifest {
+        attributes 'Main-Class': 'com.solastra.application.Application'
+        attributes 'Start-Class': 'com.solastra.application.Application'
+    }
+
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.register('buildZip', Zip) {
+    dependsOn shadowJar
+    from(zipTree(shadowJar.archiveFile))
+    archiveFileName = 'solastra.zip'
+    destinationDirectory = layout.buildDirectory.dir("distributions")
+}
+
+def localstackDir = file("${projectDir}/../infra/terraform/localstack")
+
+tasks.register('restartLocalStack', Exec) {
+    group = "deployment"
+    dependsOn buildZip
+
+    doFirst {
+        println "Restarting LocalStack..."
+    }
+
+    workingDir localstackDir
+    commandLine "bash", "-c", "docker compose restart localstack"
+}
+
+tasks.register('applyTerraForm', Exec) {
+    group = "deployment"
+    dependsOn restartLocalStack
+
+    doFirst {
+        println "Applying Terraform..."
+    }
+    workingDir localstackDir
+    commandLine "bash", "-c", "terraform apply -auto-approve"
+}
+
+tasks.register('deployLocal') {
+    group = "deployment"
+    dependsOn applyTerraForm
+}
+
+//build.dependsOn buildZip

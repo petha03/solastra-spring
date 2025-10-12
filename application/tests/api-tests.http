@@ -1,0 +1,12 @@
+### Variables
+@baseUrl = {{baseUrl}}
+
+###############################################################################
+# Test Endpoints
+###############################################################################
+
+### Test
+POST {{baseUrl}}/_user_request_/test
+Content-Type: text/plain
+
+hEllO WoRlD
