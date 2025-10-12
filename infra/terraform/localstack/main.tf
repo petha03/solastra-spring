@@ -31,9 +31,9 @@ resource "aws_lambda_function" "solastra_function" {
   timeout         = 30
   memory_size     = 512
 
-  # snap_start {
-  #   apply_on = "PublishedVersions"
-  # }
+  snap_start {
+    apply_on = "PublishedVersions"
+  }
 }
 
 resource "aws_api_gateway_rest_api" "solastra_api" {

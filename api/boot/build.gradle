@@ -1,10 +1,16 @@
 dependencies {
 
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'com.amazonaws.serverless:aws-serverless-java-container-springboot3'
+    // Core Spring Boot Functionality
+    implementation('org.springframework.boot:spring-boot-starter-web') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    }
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'  // lightweight dispatcher
 
+    //AWS Lambda Support
+    implementation 'com.amazonaws.serverless:aws-serverless-java-container-springboot3'
     implementation 'com.amazonaws:aws-lambda-java-core'
     implementation 'com.amazonaws:aws-lambda-java-events'
+
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
