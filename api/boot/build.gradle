@@ -1,9 +1,7 @@
 dependencies {
 
-    implementation 'org.springframework.boot:spring-boot-starter'
-
-    implementation 'org.springframework.cloud:spring-cloud-function-adapter-aws'
-    implementation 'org.springframework.cloud:spring-cloud-function-context'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'com.amazonaws.serverless:aws-serverless-java-container-springboot3'
 
     implementation 'com.amazonaws:aws-lambda-java-core'
     implementation 'com.amazonaws:aws-lambda-java-events'

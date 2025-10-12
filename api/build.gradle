@@ -34,6 +34,7 @@ subprojects {
         dependencies {
             dependency 'com.amazonaws:aws-lambda-java-core:1.2.3'
             dependency 'com.amazonaws:aws-lambda-java-events:3.14.0'
+            dependency 'com.amazonaws.serverless:aws-serverless-java-container-springboot3:2.0.3'
         }
     }
 

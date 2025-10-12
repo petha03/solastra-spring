@@ -25,7 +25,7 @@ resource "aws_lambda_function" "solastra_function" {
   filename         = "${path.module}/../../../api/boot/build/distributions/solastra.zip"
   function_name    = "solastra-test"
   role            = aws_iam_role.lambda_execution_role.arn
-  handler         = "org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest"
+  handler         = "com.solastra.StreamLambdaHandler::handleRequest"
   source_code_hash = filebase64sha256("${path.module}/../../../api/boot/build/distributions/solastra.zip")
   runtime         = "java21"
   timeout         = 30
@@ -34,12 +34,6 @@ resource "aws_lambda_function" "solastra_function" {
   # snap_start {
   #   apply_on = "PublishedVersions"
   # }
-
-  environment {
-    variables = {
-      SPRING_CLOUD_FUNCTION_DEFINITION = "handleRequest"
-    }
-  }
 }
 
 resource "aws_api_gateway_rest_api" "solastra_api" {
