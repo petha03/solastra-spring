@@ -1,0 +1,87 @@
+plugins {
+    id 'base'
+}
+
+def projectDir = file("${rootDir}/application/vue")
+def terraformDir = file("${rootDir}/infra/terraform/localstack")
+
+tasks.register('npmInstall', Exec) {
+    description = "Install npm dependencies"
+    group = "build"
+
+    workingDir = projectDir
+    commandLine = ["npm", "install"]
+
+    inputs.file("package.json")
+    inputs.file("package-lock.json")
+    outputs.dir("node_modules")
+}
+
+tasks.register('updateEnvLocal', Exec) {
+    group = "build"
+    description = "Update .env.local with LocalStack API Gateway ID"
+
+    workingDir terraformDir
+    commandLine "bash", "-c", """
+        API_ID=\$(terraform output -raw api_gateway_id 2>/dev/null || echo '')
+        if [ -n "\$API_ID" ]; then
+            echo "# LocalStack API Gateway endpoint" > ${projectDir}/.env.local
+            echo "VITE_API_BASE_URL=http://localhost:4566/restapis/\${API_ID}/dev/_user_request_" >> ${projectDir}/.env.local
+            echo "Updated .env.local with API Gateway ID: \$API_ID"
+        else
+            echo "Warning: Could not get API Gateway ID from Terraform"
+        fi
+    """
+}
+
+tasks.register('npmBuild', Exec) {
+    description = "Build Vue application (use -Penv=localstack|dev|uat|prod, default: localstack)"
+    group = "build"
+
+    dependsOn(npmInstall)
+
+    doFirst {
+        def env = project.findProperty('env') ?: 'localstack'
+        println "Building Vue app for environment: ${env}"
+    }
+
+    workingDir = projectDir
+    commandLine "bash", "-c", """
+        ENV=\${1:-localstack}
+        case "\$ENV" in
+            prod) npm run build ;;
+            *) npm run build:\$ENV ;;
+        esac
+    """, "bash", project.findProperty('env') ?: 'localstack'
+
+    inputs.dir("src")
+    inputs.file("index.html")
+    inputs.file("vite.config.js")
+    inputs.file("package.json")
+    outputs.dir("dist")
+}
+
+tasks.named("build") {
+    dependsOn(npmBuild)
+}
+
+tasks.register('buildLocal', Exec) {
+    group = "build"
+    description = "Build Vue application for localstack environment"
+
+    dependsOn updateEnvLocal, npmInstall
+
+    workingDir projectDir
+    commandLine "npx", "vite", "build", "--mode", "localstack"
+
+    inputs.dir("src")
+    inputs.file("index.html")
+    inputs.file("vite.config.js")
+    inputs.file("package.json")
+    outputs.dir("dist")
+}
+
+clean {
+    println("Deleting build files for ${projectDir}...")
+    delete("${projectDir}/dist", "${projectDir}/node_modules")
+}
