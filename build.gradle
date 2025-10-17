@@ -20,7 +20,7 @@ allprojects {
     }
 }
 
-subprojects {
+configure(subprojects.findAll { it.path == ':api:boot' }) {
     apply plugin: 'java'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
@@ -31,7 +31,7 @@ subprojects {
             mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
         }
 
-        dependencies {
+        dependencies { 
             dependency 'com.amazonaws:aws-lambda-java-core:1.2.3'
             dependency 'com.amazonaws:aws-lambda-java-events:3.14.0'
             dependency 'com.amazonaws.serverless:aws-serverless-java-container-springboot3:2.1.5'
@@ -47,4 +47,47 @@ subprojects {
     tasks.named('test') {
         useJUnitPlatform()
     }
+}
+
+// LocalStack deployment tasks
+def localstackDir = file("${projectDir}/infra/terraform/localstack")
+
+tasks.register('recreateLocalStack', Exec) {
+    group = "deployment"
+    dependsOn ':api:boot:buildLocal', ':application:vue:buildLocal'
+
+    doFirst {
+        println "Recreating LocalStack..."
+    }
+
+    workingDir localstackDir
+    commandLine "bash", "-c", "docker compose down && docker compose up -d"
+}
+
+tasks.register('restartLocalStack', Exec) {
+    group = "deployment"
+    dependsOn ':api:boot:buildLocal', ':application:vue:buildLocal'
+
+    doFirst {
+        println "Restarting LocalStack..."
+    }
+
+    workingDir localstackDir
+    commandLine "bash", "-c", "docker compose restart localstack"
+}
+
+tasks.register('applyTerraForm', Exec) {
+    group = "deployment"
+    dependsOn restartLocalStack
+
+    doFirst {
+        println "Applying Terraform..."
+    }
+    workingDir localstackDir
+    commandLine "bash", "-c", "terraform apply -auto-approve"
+}
+
+tasks.register('deployLocal') {
+    group = "deployment"
+    dependsOn applyTerraForm
 }

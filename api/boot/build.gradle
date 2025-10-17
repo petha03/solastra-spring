@@ -59,34 +59,8 @@ tasks.register('buildZip', Zip) {
     destinationDirectory = layout.buildDirectory.dir("distributions")
 }
 
-def localstackDir = file("${projectDir}/../../infra/terraform/localstack")
-
-tasks.register('restartLocalStack', Exec) {
-    group = "deployment"
+tasks.register('buildLocal') {
+    group = "build"
+    description = "Build application for localstack environment"
     dependsOn buildZip
-
-    doFirst {
-        println "Restarting LocalStack..."
-    }
-
-    workingDir localstackDir
-    commandLine "bash", "-c", "docker compose restart localstack"
 }
-
-tasks.register('applyTerraForm', Exec) {
-    group = "deployment"
-    dependsOn restartLocalStack
-
-    doFirst {
-        println "Applying Terraform..."
-    }
-    workingDir localstackDir
-    commandLine "bash", "-c", "terraform apply -auto-approve"
-}
-
-tasks.register('deployLocal') {
-    group = "deployment"
-    dependsOn applyTerraForm
-}
-
-//build.dependsOn buildZip

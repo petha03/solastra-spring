@@ -14,3 +14,5 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./.localstack:/var/lib/localstack"
+      - "./init-scripts:/etc/localstack/init/ready.d"
+      - "../../../application/vue/dist:/tmp/vue-app"
