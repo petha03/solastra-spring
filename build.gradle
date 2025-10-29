@@ -36,6 +36,7 @@ configure(subprojects.findAll { it.path == ':api:boot' }) {
             dependency 'com.amazonaws:aws-lambda-java-core:1.2.3'
             dependency 'com.amazonaws:aws-lambda-java-events:3.14.0'
             dependency 'com.amazonaws.serverless:aws-serverless-java-container-springboot3:2.1.5'
+            dependency 'io.rest-assured:rest-assured:5.3.2'
         }
     }
 
@@ -77,9 +78,20 @@ tasks.register('restartLocalStack', Exec) {
     commandLine "bash", "-c", "docker compose restart localstack"
 }
 
-tasks.register('applyTerraForm', Exec) {
+tasks.register('initTerraform', Exec) {
     group = "deployment"
     dependsOn restartLocalStack
+
+    doFirst {
+        println "Initializing Terraform..."
+    }
+    workingDir localstackDir
+    commandLine "bash", "-c", "terraform init"
+}
+
+tasks.register('applyTerraForm', Exec) {
+    group = "deployment"
+    dependsOn initTerraform
 
     doFirst {
         println "Applying Terraform..."

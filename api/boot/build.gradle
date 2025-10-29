@@ -1,3 +1,17 @@
+// Integration test source set
+sourceSets {
+    integrationTest {
+        java {
+            srcDir 'src/integrationTest/java'
+        }
+        resources {
+            srcDir 'src/integrationTest/resources'
+        }
+        compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
 dependencies {
 
     // Core Spring Boot Functionality - MVC (traditional servlet-based)
@@ -14,6 +28,12 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Integration test dependencies
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-web'
+    integrationTestImplementation 'io.rest-assured:rest-assured'
+    integrationTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.bootJar {
@@ -50,6 +70,54 @@ shadowJar {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.named('processIntegrationTestResources') {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+tasks.register('integrationTest', Test) {
+    group = "verification"
+    description = "Run integration tests against LocalStack"
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    useJUnitPlatform()
+
+    shouldRunAfter test
+
+    doFirst {
+        // Get API Gateway URL from environment or Terraform output
+        def apiBaseUrl = System.getenv('API_BASE_URL')
+        if (!apiBaseUrl) {
+            try {
+                def terraformDir = file("${rootProject.projectDir}/infra/terraform/localstack")
+                def outputStream = new ByteArrayOutputStream()
+                def result = exec {
+                    workingDir terraformDir
+                    commandLine 'terraform', 'output', '-raw', 'localstack_api_url'
+                    standardOutput = outputStream
+                    ignoreExitValue = true
+                }
+                if (result.exitValue == 0) {
+                    apiBaseUrl = outputStream.toString().trim()
+                }
+            } catch (Exception e) {
+                logger.warn("Could not get API Gateway URL from Terraform: ${e.message}")
+            }
+        }
+
+        if (apiBaseUrl) {
+            systemProperty 'api.base.url', apiBaseUrl
+            logger.lifecycle("Using API Gateway URL: ${apiBaseUrl}")
+        }
+    }
+
+    // Pass environment variables to tests
+    systemProperty 'aws.endpoint', System.getenv('AWS_ENDPOINT') ?: 'http://localhost:4566'
+    systemProperty 'aws.region', System.getenv('AWS_REGION') ?: 'us-east-1'
+    systemProperty 'aws.accessKeyId', System.getenv('AWS_ACCESS_KEY_ID') ?: 'test'
+    systemProperty 'aws.secretAccessKey', System.getenv('AWS_SECRET_ACCESS_KEY') ?: 'test'
 }
 
 tasks.register('buildZip', Zip) {
