@@ -1,5 +1,6 @@
-package com.solastra.controller;
+package com.solastra.adapters.in.rest;
 
+import com.solastra.application.port.in.UploadFileUseCase;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/upload")
 public class ApiController {
+
+    private final UploadFileUseCase uploadFileUseCase;
+
+    public ApiController(UploadFileUseCase uploadFileUseCase) {
+        this.uploadFileUseCase = uploadFileUseCase;
+    }
 
     @PostMapping
     public String test(@RequestBody String body) {

@@ -25,7 +25,7 @@ resource "aws_lambda_function" "solastra_function" {
   filename         = "${path.module}/../../../api/boot/build/distributions/solastra.zip"
   function_name    = "solastra-test"
   role            = aws_iam_role.lambda_execution_role.arn
-  handler         = "com.solastra.StreamLambdaHandler::handleRequest"
+  handler         = "com.solastra.adapters.in.lambda.StreamLambdaHandler::handleRequest"
   source_code_hash = filebase64sha256("${path.module}/../../../api/boot/build/distributions/solastra.zip")
   runtime         = "java21"
   timeout         = 30
