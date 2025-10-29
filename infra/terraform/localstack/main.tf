@@ -160,6 +160,11 @@ resource "aws_s3_bucket" "vue_app" {
   bucket = "solastra-vue-app"
 }
 
+# S3 bucket for file uploads
+resource "aws_s3_bucket" "uploads" {
+  bucket = "solastra-uploads"
+}
+
 resource "aws_s3_bucket_website_configuration" "vue_app" {
   bucket = aws_s3_bucket.vue_app.id
 

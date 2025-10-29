@@ -29,9 +29,10 @@ configure(subprojects.findAll { it.path == ':api:boot' }) {
     dependencyManagement {
         imports {
             mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+            mavenBom "software.amazon.awssdk:bom:2.20.26"
         }
 
-        dependencies { 
+        dependencies {
             dependency 'com.amazonaws:aws-lambda-java-core:1.2.3'
             dependency 'com.amazonaws:aws-lambda-java-events:3.14.0'
             dependency 'com.amazonaws.serverless:aws-serverless-java-container-springboot3:2.1.5'

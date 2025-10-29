@@ -28,12 +28,21 @@ public class ApiController {
     @PostMapping(value = "/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, Object>> uploadFile(@RequestPart("file") MultipartFile file) {
         try {
+            // Upload file to S3 via use case
+            String s3Key = uploadFileUseCase.uploadFile(
+                    file.getOriginalFilename(),
+                    file.getContentType(),
+                    file.getInputStream(),
+                    file.getSize()
+            );
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("fileName", file.getOriginalFilename());
             response.put("contentType", file.getContentType());
             response.put("size", file.getSize());
-            response.put("message", "File uploaded successfully");
+            response.put("s3Key", s3Key);
+            response.put("message", "File uploaded successfully to S3");
 
             return ResponseEntity.ok()
                 .header("Access-Control-Allow-Origin", "*")
