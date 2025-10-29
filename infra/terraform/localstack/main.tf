@@ -25,7 +25,7 @@ resource "aws_lambda_function" "solastra_function" {
   filename         = "${path.module}/../../../api/boot/build/distributions/solastra.zip"
   function_name    = "solastra-test"
   role            = aws_iam_role.lambda_execution_role.arn
-  handler         = "com.solastra.StreamLambdaHandler::handleRequest"
+  handler         = "com.solastra.adapters.in.lambda.StreamLambdaHandler::handleRequest"
   source_code_hash = filebase64sha256("${path.module}/../../../api/boot/build/distributions/solastra.zip")
   runtime         = "java21"
   timeout         = 30
@@ -64,9 +64,63 @@ resource "aws_api_gateway_integration" "lambda" {
   uri                     = aws_lambda_function.solastra_function.invoke_arn
 }
 
+# Enable CORS for OPTIONS requests
+resource "aws_api_gateway_method" "options" {
+  rest_api_id   = aws_api_gateway_rest_api.solastra_api.id
+  resource_id   = aws_api_gateway_resource.proxy.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "options" {
+  rest_api_id = aws_api_gateway_rest_api.solastra_api.id
+  resource_id = aws_api_gateway_resource.proxy.id
+  http_method = aws_api_gateway_method.options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "options_200" {
+  rest_api_id = aws_api_gateway_rest_api.solastra_api.id
+  resource_id = aws_api_gateway_resource.proxy.id
+  http_method = aws_api_gateway_method.options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_200" {
+  rest_api_id = aws_api_gateway_rest_api.solastra_api.id
+  resource_id = aws_api_gateway_resource.proxy.id
+  http_method = aws_api_gateway_method.options.http_method
+  status_code = aws_api_gateway_method_response.options_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT,DELETE'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.options
+  ]
+}
+
 resource "aws_api_gateway_deployment" "deployment" {
   depends_on = [
-    aws_api_gateway_integration.lambda
+    aws_api_gateway_integration.lambda,
+    aws_api_gateway_integration.options
   ]
 
   rest_api_id = aws_api_gateway_rest_api.solastra_api.id
@@ -76,6 +130,9 @@ resource "aws_api_gateway_deployment" "deployment" {
       aws_api_gateway_resource.proxy.id,
       aws_api_gateway_method.proxy.id,
       aws_api_gateway_integration.lambda.id,
+      aws_api_gateway_method.options.id,
+      aws_api_gateway_integration.options.id,
+      aws_api_gateway_integration_response.options_200.id,
     ]))
   }
 
@@ -101,6 +158,11 @@ resource "aws_lambda_permission" "apigw" {
 # S3 bucket for Vue application
 resource "aws_s3_bucket" "vue_app" {
   bucket = "solastra-vue-app"
+}
+
+# S3 bucket for file uploads
+resource "aws_s3_bucket" "uploads" {
+  bucket = "solastra-uploads"
 }
 
 resource "aws_s3_bucket_website_configuration" "vue_app" {

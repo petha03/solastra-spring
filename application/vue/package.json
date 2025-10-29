@@ -8,6 +8,7 @@
     "build": "vite build --mode prod",
     "build:dev": "vite build --mode dev",
     "build:uat": "vite build --mode uat",
+    "build:localstack": "vite build --mode localstack",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -7,7 +7,7 @@
       <p>Start building your single page application here.</p>
       <FileUpload
         :multiple="true"
-        :upload-url="apiUrl + '/upload'"
+        :upload-url="apiUrl + '/upload/file'"
         @files-selected="handleFilesSelected"
         @upload-success="handleUploadSuccess"
         @upload-error="handleUploadError"

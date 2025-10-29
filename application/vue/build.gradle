@@ -17,19 +17,20 @@ tasks.register('npmInstall', Exec) {
     outputs.dir("node_modules")
 }
 
-tasks.register('updateEnvLocal', Exec) {
+tasks.register('updateEnvLocalStack', Exec) {
     group = "build"
-    description = "Update .env.local with LocalStack API Gateway ID"
+    description = "Update .env.localstack with LocalStack API Gateway URL"
 
     workingDir terraformDir
     commandLine "bash", "-c", """
-        API_ID=\$(terraform output -raw api_gateway_id 2>/dev/null || echo '')
-        if [ -n "\$API_ID" ]; then
-            echo "# LocalStack API Gateway endpoint" > ${projectDir}/.env.local
-            echo "VITE_API_BASE_URL=http://localhost:4566/restapis/\${API_ID}/dev/_user_request_" >> ${projectDir}/.env.local
-            echo "Updated .env.local with API Gateway ID: \$API_ID"
+        API_URL=\$(terraform output -raw api_gateway_url 2>/dev/null || echo '')
+        if [ -n "\$API_URL" ]; then
+            echo "# LocalStack API Gateway endpoint (auto-generated)" > ${projectDir}/.env.localstack
+            echo "# Do not edit manually - this file is regenerated on each build" >> ${projectDir}/.env.localstack
+            echo "VITE_API_BASE_URL=\${API_URL}" >> ${projectDir}/.env.localstack
+            echo "Updated .env.localstack with API Gateway URL: \$API_URL"
         else
-            echo "Warning: Could not get API Gateway ID from Terraform"
+            echo "Warning: Could not get API Gateway URL from Terraform"
         fi
     """
 }
@@ -69,7 +70,7 @@ tasks.register('buildLocal', Exec) {
     group = "build"
     description = "Build Vue application for localstack environment"
 
-    dependsOn updateEnvLocal, npmInstall
+    dependsOn updateEnvLocalStack, npmInstall
 
     workingDir projectDir
     commandLine "npx", "vite", "build", "--mode", "localstack"

@@ -5,8 +5,54 @@
 # Test Endpoints
 ###############################################################################
 
-### Test
-POST {{baseUrl}}/_user_request_/test
+### Test - Echo text
+POST {{baseUrl}}/_user_request_/upload
 Content-Type: text/plain
 
 hEllO WoRlD
+
+### Upload single file (from file system) - Using proper multipart syntax
+POST {{baseUrl}}/_user_request_/upload/file
+Content-Type: multipart/form-data; boundary=WebKitFormBoundary7MA4YWxkTrZu0gW
+
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="sample-upload.txt"
+Content-Type: text/plain
+
+< ./resources/sample-upload.txt
+--WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Upload single file (inline - cURL style)
+# You can also use this format by copying to terminal
+# curl -X POST "{{baseUrl}}/_user_request_/upload/file" \
+#   -F "file=@./resources/sample-upload.txt"
+
+### Upload multiple files - Method 1 (as individual parameters)
+POST {{baseUrl}}/_user_request_/upload/files
+Content-Type: multipart/form-data; boundary=WebKitFormBoundary
+
+--WebKitFormBoundary
+Content-Disposition: form-data; name="files"; filename="file1.txt"
+
+Content of file 1
+--WebKitFormBoundary
+Content-Disposition: form-data; name="files"; filename="file2.txt"
+
+Content of file 2
+--WebKitFormBoundary--
+
+### Upload multiple files - Method 2 (using sample file twice)
+POST {{baseUrl}}/_user_request_/upload/files
+Content-Type: multipart/form-data; boundary=WebKitFormBoundary
+
+--WebKitFormBoundary
+Content-Disposition: form-data; name="files"; filename="sample-upload.txt"
+Content-Type: text/plain
+
+< ./resources/sample-upload.txt
+--WebKitFormBoundary
+Content-Disposition: form-data; name="files"; filename="sample-upload-2.txt"
+Content-Type: text/plain
+
+< ./resources/sample-upload.txt
+--WebKitFormBoundary--
