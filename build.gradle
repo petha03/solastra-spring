@@ -87,9 +87,70 @@ tasks.register('applyTerraForm', Exec) {
     commandLine "bash", "-c", "terraform apply -auto-approve"
 }
 
-tasks.register('uploadVueToS3', Exec) {
+tasks.register('updateVueEnv', Exec) {
     group = "deployment"
     dependsOn applyTerraForm
+
+    doFirst {
+        println "Updating Vue environment with LocalStack API URL..."
+    }
+    workingDir localstackDir
+    commandLine "bash", "-c", """
+        API_URL=\$(terraform output -raw localstack_api_url 2>/dev/null || echo '')
+        if [ -n "\$API_URL" ]; then
+            echo "# LocalStack API Gateway endpoint (auto-generated)" > ${projectDir}/application/vue/.env.localstack
+            echo "# Do not edit manually - this file is regenerated on each deployment" >> ${projectDir}/application/vue/.env.localstack
+            echo "VITE_API_BASE_URL=\${API_URL}" >> ${projectDir}/application/vue/.env.localstack
+            echo "Updated .env.localstack with LocalStack API URL: \$API_URL"
+        else
+            echo "Warning: Could not get LocalStack API URL from Terraform"
+        fi
+    """
+}
+
+tasks.register('updateHttpClientEnv', Exec) {
+    group = "deployment"
+    dependsOn applyTerraForm
+
+    doFirst {
+        println "Updating HTTP client environment configuration..."
+    }
+    workingDir localstackDir
+    commandLine "bash", "-c", """
+        API_ID=\$(terraform output -raw api_gateway_id 2>/dev/null || echo '')
+        if [ -n "\$API_ID" ]; then
+            BASE_URL="http://localhost:4566/restapis/\${API_ID}/dev"
+            cat > ${projectDir}/api/tests/http-client.env.json <<EOF
+{
+  "dev": {
+    "apiId": "\${API_ID}",
+    "baseUrl": "\${BASE_URL}"
+  }
+}
+EOF
+            echo "Updated http-client.env.json with API Gateway ID: \$API_ID"
+            echo "Base URL: \$BASE_URL"
+        else
+            echo "Warning: Could not get API Gateway ID from Terraform"
+        fi
+    """
+}
+
+tasks.register('rebuildVueForLocalStack', Exec) {
+    group = "deployment"
+    dependsOn updateVueEnv
+
+    doFirst {
+        println "Rebuilding Vue app with updated environment..."
+    }
+
+    workingDir file("${projectDir}/application/vue")
+    commandLine "npx", "vite", "build", "--mode", "localstack"
+}
+
+tasks.register('uploadVueToS3', Exec) {
+    group = "deployment"
+    dependsOn rebuildVueForLocalStack
 
     doFirst {
         println "Uploading Vue app to S3..."
@@ -99,7 +160,7 @@ tasks.register('uploadVueToS3', Exec) {
 
 tasks.register('deployLocal') {
     group = "deployment"
-    dependsOn uploadVueToS3
+    dependsOn uploadVueToS3, updateHttpClientEnv
 
     doLast {
         println ""
@@ -108,6 +169,7 @@ tasks.register('deployLocal') {
         println "=".repeat(60)
         println "Vue App: http://solastra-vue-app.s3-website.localhost.localstack.cloud:4566"
         println "API Gateway: Run 'cd infra/terraform/localstack && terraform output api_gateway_url'"
+        println "HTTP Client: api/tests/http-client.env.json updated with API Gateway ID"
         println "=".repeat(60)
     }
 }

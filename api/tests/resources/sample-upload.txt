@@ -1,0 +1,5 @@
+This is a sample file for testing file uploads to the Solastra Spring Boot API.
+
+It contains multiple lines of text to demonstrate binary file upload capabilities.
+
+File upload test - Success!

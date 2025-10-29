@@ -89,9 +89,26 @@ export default {
       this.uploading = true
       const formData = new FormData()
 
-      this.files.forEach((file, index) => {
-        formData.append(`file${index}`, file)
-      })
+      // For single file upload, use 'file' parameter
+      // For multiple files, use 'files' parameter
+      if (this.files.length === 1) {
+        console.log('Uploading single file:', this.files[0])
+        console.log('File name:', this.files[0].name, 'Size:', this.files[0].size)
+        formData.append('file', this.files[0])
+      } else {
+        console.log('Uploading multiple files:', this.files.length)
+        this.files.forEach((file) => {
+          console.log('File:', file.name, 'Size:', file.size)
+          formData.append('files', file)
+        })
+      }
+
+      console.log('Upload URL:', this.uploadUrl)
+      console.log('FormData entries:', Array.from(formData.entries()).map(([key, value]) => ({
+        key,
+        fileName: value instanceof File ? value.name : 'not a file',
+        size: value instanceof File ? value.size : 'n/a'
+      })))
 
       try {
         const response = await fetch(this.uploadUrl, {
@@ -99,15 +116,22 @@ export default {
           body: formData
         })
 
+        console.log('Response status:', response.status)
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+
         if (response.ok) {
           const result = await response.json()
+          console.log('Upload success:', result)
           this.$emit('upload-success', result)
           this.files = []
           this.$refs.fileInput.value = ''
         } else {
-          throw new Error('Upload failed')
+          const errorData = await response.json().catch(() => ({ error: 'Upload failed' }))
+          console.error('Upload error response:', errorData)
+          throw new Error(errorData.error || 'Upload failed')
         }
       } catch (error) {
+        console.error('Upload exception:', error)
         this.$emit('upload-error', error)
       } finally {
         this.uploading = false

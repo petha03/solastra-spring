@@ -1,10 +1,8 @@
 dependencies {
 
-    // Core Spring Boot Functionality
-    implementation('org.springframework.boot:spring-boot-starter-web') {
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
-    }
-    implementation 'org.springframework.boot:spring-boot-starter-webflux'  // lightweight dispatcher
+    // Core Spring Boot Functionality - MVC (traditional servlet-based)
+    implementation 'org.springframework.boot:spring-boot-starter-web'  // Traditional MVC web framework
+    implementation 'org.springframework.boot:spring-boot-starter-security'  // Security for CSRF configuration
 
     //AWS Lambda Support
     implementation 'com.amazonaws.serverless:aws-serverless-java-container-springboot3'

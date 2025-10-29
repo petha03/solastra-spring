@@ -72,12 +72,17 @@ This is the recommended way to run the entire stack locally with AWS services em
 This command will:
 1. Build the API and application
 2. Start LocalStack via Docker Compose
-3. Apply Terraform configuration
-4. Deploy Lambda function and upload Vue app to S3
+3. Apply Terraform configuration (creates Lambda and API Gateway)
+4. Update Vue environment with API Gateway URL
+5. Update HTTP client test environment with API Gateway ID
+6. Rebuild Vue app with correct API endpoint
+7. Upload Vue app to S3
 
 After deployment:
 - **Vue App**: http://solastra-vue-app.s3-website.localhost.localstack.cloud:4566
-- **API Gateway**: Run `cd infra/terraform/localstack && terraform output api_gateway_url`
+- **API Gateway**: The Vue app is automatically configured to use the LocalStack API Gateway endpoint
+- **HTTP Client Tests**: `api/tests/http-client.env.json` is automatically updated with the API Gateway ID and base URL
+- To view API Gateway URL: Run `cd infra/terraform/localstack && terraform output api_gateway_url`
 
 ### Option 2: Vue Development Server
 
@@ -129,6 +134,21 @@ npm run local
 ./gradlew :api:boot:test
 ```
 
+### HTTP Client Tests
+
+The project includes HTTP client tests in `api/tests/api-tests.http`. After running `./gradlew deployLocal`, the environment configuration is automatically updated in `api/tests/http-client.env.json` with:
+
+```json
+{
+  "dev": {
+    "apiId": "zqlxpzhja8",
+    "baseUrl": "http://localhost:4566/restapis/zqlxpzhja8/dev"
+  }
+}
+```
+
+You can run these tests directly in IntelliJ IDEA or any IDE that supports `.http` files with the HTTP Client plugin.
+
 ## Cleaning Build Artifacts
 
 ```bash
@@ -169,13 +189,21 @@ npm run local
 
 ### Vue Application
 
-Create `application/vue/.env.local` for local development:
+The Vue application uses environment-specific configuration files:
+
+- **`.env.localstack`**: Auto-generated during `./gradlew deployLocal` with the LocalStack API Gateway URL
+- **`.env.local`**: For local development server (create manually if needed)
+- **`.env.dev`**: Development environment configuration
+- **`.env.uat`**: UAT environment configuration
+- **`.env.prod`**: Production environment configuration (uses `vite build` without suffix)
+
+The `.env.localstack` file is automatically created with the correct API Gateway endpoint when you run `./gradlew deployLocal`. It contains:
 
 ```
-VITE_API_BASE_URL=http://localhost:4566/restapis/{api-id}/dev/_user_request_
+VITE_API_BASE_URL=https://{api-id}.execute-api.us-east-1.amazonaws.com/dev
 ```
 
-This is automatically generated when running `./gradlew deployLocal`.
+**Note**: `.env.localstack` is auto-generated and should not be edited manually. It's excluded from git.
 
 ## Gradle Tasks Reference
 
