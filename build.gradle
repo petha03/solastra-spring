@@ -87,9 +87,29 @@ tasks.register('applyTerraForm', Exec) {
     commandLine "bash", "-c", "terraform apply -auto-approve"
 }
 
-tasks.register('deployLocal') {
+tasks.register('uploadVueToS3', Exec) {
     group = "deployment"
     dependsOn applyTerraForm
+
+    doFirst {
+        println "Uploading Vue app to S3..."
+    }
+    commandLine "docker", "exec", "localstack-solastra", "awslocal", "s3", "sync", "/tmp/vue-app", "s3://solastra-vue-app/", "--delete"
+}
+
+tasks.register('deployLocal') {
+    group = "deployment"
+    dependsOn uploadVueToS3
+
+    doLast {
+        println ""
+        println "=".repeat(60)
+        println "Deployment Complete!"
+        println "=".repeat(60)
+        println "Vue App: http://solastra-vue-app.s3-website.localhost.localstack.cloud:4566"
+        println "API Gateway: Run 'cd infra/terraform/localstack && terraform output api_gateway_url'"
+        println "=".repeat(60)
+    }
 }
 
 // Run Vue application development server

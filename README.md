@@ -73,9 +73,11 @@ This command will:
 1. Build the API and application
 2. Start LocalStack via Docker Compose
 3. Apply Terraform configuration
-4. Deploy Lambda function and static assets to LocalStack
+4. Deploy Lambda function and upload Vue app to S3
 
-After deployment, the Vue app will be accessible via the LocalStack S3 endpoint, and API calls will go through the LocalStack API Gateway.
+After deployment:
+- **Vue App**: http://solastra-vue-app.s3-website.localhost.localstack.cloud:4566
+- **API Gateway**: Run `cd infra/terraform/localstack && terraform output api_gateway_url`
 
 ### Option 2: Vue Development Server
 
@@ -180,16 +182,18 @@ This is automatically generated when running `./gradlew deployLocal`.
 | Task | Description |
 |------|-------------|
 | `build` | Build entire project |
+| `runVue` | Run Vue dev server with hot-reload on port 3972 |
+| `deployLocal` | Full LocalStack deployment (builds, deploys, uploads) |
+| `uploadVueToS3` | Upload Vue app to LocalStack S3 |
+| `recreateLocalStack` | Recreate LocalStack containers |
+| `restartLocalStack` | Restart LocalStack |
+| `applyTerraForm` | Apply Terraform configuration |
 | `:api:boot:shadowJar` | Build API uber JAR |
 | `:api:boot:buildZip` | Build API ZIP for Lambda |
 | `:api:boot:buildLocal` | Build API for LocalStack |
 | `:application:vue:npmInstall` | Install npm dependencies |
 | `:application:vue:npmBuild` | Build Vue app |
 | `:application:vue:buildLocal` | Build Vue app for LocalStack |
-| `deployLocal` | Full LocalStack deployment |
-| `recreateLocalStack` | Recreate LocalStack containers |
-| `restartLocalStack` | Restart LocalStack |
-| `applyTerraForm` | Apply Terraform configuration |
 
 ## Troubleshooting
 
