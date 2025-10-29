@@ -91,3 +91,18 @@ tasks.register('deployLocal') {
     group = "deployment"
     dependsOn applyTerraForm
 }
+
+// Run Vue application development server
+tasks.register('runVue', Exec) {
+    group = "application"
+    description = "Run Vue application development server with hot-reload"
+    dependsOn ':application:vue:npmInstall'
+
+    doFirst {
+        println "Starting Vue application development server..."
+        println "Application will be available at http://localhost:5173"
+    }
+
+    workingDir file("${projectDir}/application/vue")
+    commandLine "npm", "run", "local", "--", "--port", "3972"
+}
