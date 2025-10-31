@@ -32,8 +32,9 @@ class FileUploadIntegrationTest extends BaseIntegrationTest {
             .post("/upload/file")
         .then()
             .statusCode(200)
-            .body("success", equalTo(true))
             .body("fileName", equalTo(tempFile.getName()))
+            .body("contentType", equalTo("text/plain"))
+            .body("size", notNullValue())
             .body("s3Key", notNullValue())
             .body("message", containsString("uploaded successfully"));
     }

@@ -1,5 +1,6 @@
 package com.solastra.adapters.in.rest;
 
+import com.solastra.adapters.in.rest.model.ErrorResponseDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,7 +13,7 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiController.ErrorResponseDto> handleValidationExceptions(
+    public ResponseEntity<ErrorResponseDto> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
 
         // Collect all validation error messages
@@ -27,12 +28,40 @@ public class GlobalExceptionHandler {
                 })
                 .collect(Collectors.joining(", "));
 
-        ApiController.ErrorResponseDto errorDto = new ApiController.ErrorResponseDto(
+        ErrorResponseDto errorDto = new ErrorResponseDto(
                 false,
                 errorMessage
         );
 
         return ResponseEntity.badRequest()
+                .header("Access-Control-Allow-Origin", "*")
+                .body(errorDto);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponseDto> handleIllegalArgumentException(
+            IllegalArgumentException ex) {
+
+        ErrorResponseDto errorDto = new ErrorResponseDto(
+                false,
+                ex.getMessage()
+        );
+
+        return ResponseEntity.badRequest()
+                .header("Access-Control-Allow-Origin", "*")
+                .body(errorDto);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponseDto> handleGenericException(
+            Exception ex) {
+
+        ErrorResponseDto errorDto = new ErrorResponseDto(
+                false,
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(500)
                 .header("Access-Control-Allow-Origin", "*")
                 .body(errorDto);
     }

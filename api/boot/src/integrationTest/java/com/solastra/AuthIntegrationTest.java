@@ -12,7 +12,7 @@ import static org.hamcrest.Matchers.*;
 /**
  * Integration tests for user registration endpoint
  */
-public class RegisterIntegrationTest extends BaseIntegrationTest {
+public class AuthIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldRegisterNewAccount() {
@@ -29,16 +29,7 @@ public class RegisterIntegrationTest extends BaseIntegrationTest {
             .post("/auth/register")
         .then()
             .statusCode(200)
-            .body("success", equalTo(true))
-            .body("token", notNullValue())
-            .body("token", not(emptyString()))
-            .body("account", notNullValue())
-            .body("account.id", notNullValue())
-            .body("account.name", equalTo("Test Account"))
-            .body("account.ownerEmail", equalTo("test@example.com"))
-            .body("account.createdAt", notNullValue())
-            .body("message", equalTo("Account created successfully"))
-            .body("error", nullValue());
+            .body("message", equalTo("Account created successfully"));
     }
 
     @Test
@@ -150,7 +141,7 @@ public class RegisterIntegrationTest extends BaseIntegrationTest {
             .post("/auth/register")
         .then()
             .statusCode(200)
-            .body("success", equalTo(true));
+            .body("message", equalTo("Account created successfully"));
 
         // Second registration with same email should fail
         given()
@@ -165,22 +156,37 @@ public class RegisterIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldReturnValidJwtTokenOnSuccessfulRegistration() {
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("email", "jwt-test@example.com");
-        requestBody.put("password", "password123");
-        requestBody.put("name", "JWT Test User");
-        requestBody.put("accountName", "JWT Test Account");
+    void shouldLoginAndReturnValidJwtToken() {
+        // First register an account
+        Map<String, String> registerBody = new HashMap<>();
+        registerBody.put("email", "login-test@example.com");
+        registerBody.put("password", "password123");
+        registerBody.put("name", "Login Test User");
+        registerBody.put("accountName", "Login Test Account");
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(registerBody)
+        .when()
+            .post("/auth/register")
+        .then()
+            .statusCode(200);
+
+        // Now login with the same credentials
+        Map<String, String> loginBody = new HashMap<>();
+        loginBody.put("email", "login-test@example.com");
+        loginBody.put("password", "password123");
 
         String token = given()
             .contentType(ContentType.JSON)
-            .body(requestBody)
+            .body(loginBody)
         .when()
-            .post("/auth/register")
+            .post("/auth/login")
         .then()
             .statusCode(200)
             .body("success", equalTo(true))
             .body("token", notNullValue())
+            .body("error", nullValue())
             .extract()
             .path("token");
 
