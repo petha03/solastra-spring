@@ -1,4 +1,4 @@
-package com.solastra.config;
+package com.solastra.infrastructure.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

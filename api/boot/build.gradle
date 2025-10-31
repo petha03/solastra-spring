@@ -17,6 +17,7 @@ dependencies {
     // Core Spring Boot Functionality - MVC (traditional servlet-based)
     implementation 'org.springframework.boot:spring-boot-starter-web'  // Traditional MVC web framework
     implementation 'org.springframework.boot:spring-boot-starter-security'  // Security for CSRF configuration
+    implementation 'org.springframework.boot:spring-boot-starter-validation'  // Bean validation with Hibernate Validator
 
     // AWS Lambda Support
     implementation 'com.amazonaws.serverless:aws-serverless-java-container-springboot3'
@@ -25,6 +26,11 @@ dependencies {
 
     // AWS SDK for S3 (version managed by BOM in root build.gradle)
     implementation 'software.amazon.awssdk:s3'
+
+    // JWT for authentication (version managed in root build.gradle)
+    implementation 'io.jsonwebtoken:jjwt-api'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
