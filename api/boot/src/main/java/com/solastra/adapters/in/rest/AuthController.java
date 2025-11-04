@@ -28,18 +28,23 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<RegisterResponseDto> register(@Valid @RequestBody RegisterRequest request) {
 
         RegisterCommand command = new RegisterCommand(
                 request.email(),
                 request.password(),
-                request.name(),
+                request.firstName(),
+                request.lastName(),
+                request.middleName(),
+                request.prefix(),
+                request.suffix(),
+                request.username(),
                 request.accountName()
         );
 
         RegisterResponse response = authUseCase.register(command);
 
-        RegisterResponseDto dto = new RegisterResponseDto(response.message());
+        RegisterResponseDto dto = RegisterResponseDto.from(response);
 
         return ResponseEntity.ok()
                 .header("Access-Control-Allow-Origin", "*")

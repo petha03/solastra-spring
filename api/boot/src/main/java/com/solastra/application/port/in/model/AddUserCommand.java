@@ -1,6 +1,8 @@
 package com.solastra.application.port.in.model;
 
-public record RegisterCommand(
+import com.solastra.domain.model.UserRole;
+
+public record AddUserCommand(
         String email,
         String password,
         String firstName,
@@ -9,5 +11,6 @@ public record RegisterCommand(
         String prefix,
         String suffix,
         String username,
-        String accountName
+        UserRole role,
+        String accountId
 ) {}

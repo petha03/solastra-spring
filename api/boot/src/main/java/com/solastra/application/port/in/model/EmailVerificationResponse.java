@@ -1,6 +1,6 @@
 package com.solastra.application.port.in.model;
 
-public record RegisterResponse(
+public record EmailVerificationResponse(
         String message,
-        UserResponse owner
+        String login
 ) {}

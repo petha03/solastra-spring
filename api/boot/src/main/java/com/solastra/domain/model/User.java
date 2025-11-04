@@ -6,22 +6,32 @@ public class User {
     private String id;
     private String email;
     private String passwordHash;
-    private String name;
-    private String role;
+    private String firstName;
+    private String lastName;
+    private String middleName;
+    private String prefix;
+    private String suffix;
+    private String username;
+    private UserRole role;
     private String accountId;
-    private Instant createdAt;
+    private Instant createdTimestamp;
 
     public User() {
     }
 
-    public User(String id, String email, String passwordHash, String name, String role, String accountId, Instant createdAt) {
+    public User(String id, String email, String passwordHash, String firstName, String lastName, String middleName, String prefix, String suffix, String username, UserRole role, String accountId, Instant createdTimestamp) {
         this.id = id;
         this.email = email;
         this.passwordHash = passwordHash;
-        this.name = name;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.middleName = middleName;
+        this.prefix = prefix;
+        this.suffix = suffix;
+        this.username = username;
         this.role = role;
         this.accountId = accountId;
-        this.createdAt = createdAt;
+        this.createdTimestamp = createdTimestamp;
     }
 
     public String getId() {
@@ -48,19 +58,59 @@ public class User {
         this.passwordHash = passwordHash;
     }
 
-    public String getName() {
-        return name;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
-    public String getRole() {
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getMiddleName() {
+        return middleName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
+    }
+
+    public String getPrefix() {
+        return prefix;
+    }
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
+    public String getSuffix() {
+        return suffix;
+    }
+
+    public void setSuffix(String suffix) {
+        this.suffix = suffix;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public UserRole getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(UserRole role) {
         this.role = role;
     }
 
@@ -72,11 +122,11 @@ public class User {
         this.accountId = accountId;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
+    public Instant getCreatedTimestamp() {
+        return createdTimestamp;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
+    public void setCreatedTimestamp(Instant createdTimestamp) {
+        this.createdTimestamp = createdTimestamp;
     }
 }
