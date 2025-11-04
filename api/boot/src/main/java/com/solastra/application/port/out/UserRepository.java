@@ -48,4 +48,12 @@ public interface UserRepository {
      * @return Optional containing the user if found
      */
     Optional<User> findByEmail(String email);
+
+    /**
+     * Find all users for a given account
+     *
+     * @param accountId The account ID
+     * @return List of users in the account
+     */
+    java.util.List<User> findAllByAccountId(String accountId);
 }

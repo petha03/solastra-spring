@@ -15,6 +15,7 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -147,5 +148,27 @@ public class S3UserRepository implements UserRepository {
 
     private String buildUserPrefix(String accountId) {
         return String.format("accounts/%s/users/", accountId);
+    }
+
+    @Override
+    public List<User> findAllByAccountId(String accountId) {
+        try {
+            String prefix = buildUserPrefix(accountId);
+
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(accountsBucketName)
+                    .prefix(prefix)
+                    .build();
+
+            return s3Client.listObjectsV2(listRequest).contents().stream()
+                    .map(S3Object::key)
+                    .filter(key -> key.endsWith(".json"))
+                    .map(this::getUserByKey)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(java.util.stream.Collectors.toList());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to find users by accountId from S3", e);
+        }
     }
 }

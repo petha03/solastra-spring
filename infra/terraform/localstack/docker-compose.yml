@@ -4,6 +4,7 @@ services:
     container_name: localstack-solastra
     ports:
       - "4566:4566"
+      - "5005:5005"
     environment:
       - SERVICES=lambda,iam,apigateway,s3
       - DEBUG=1
@@ -11,6 +12,7 @@ services:
       - DATA_DIR=/var/lib/localstack
       - LAMBDA_EXECUTOR=docker
       - LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT=30
+      - LOCALSTACK_DOCKER_FLAGS=-p 5005:5005
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./.localstack:/var/lib/localstack"

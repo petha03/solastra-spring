@@ -1,6 +1,12 @@
-# solastra-spring
+# Solastra Spring
 
-A Spring Boot serverless API with a Vue.js single-page application frontend, designed for deployment on AWS Lambda with LocalStack support for local development.
+Solastra Spring is a full-stack platform combining a Spring Boot serverless API with a Vue.js frontend. It's designed for AWS Lambda deployment with LocalStack support for local development and testing.
+
+The architecture follows hexagonal design principles, separating business logic, application services, and infrastructure adapters. The API uses Spring Boot 3.5+ with WebFlux for reactive request handling and is optimized for AWS Lambda with SnapStart support. AWS Serverless Java Container bridges Spring Boot with Lambda's execution model, enabling standard Spring patterns in a serverless environment.
+
+Infrastructure is managed as code using Terraform. LocalStack provides a local AWS environment for building and testing without connecting to AWS. The Gradle build system automates the workflow, including building components, deploying to LocalStack, and updating environment configurations.
+
+The Vue.js frontend uses Vite 6.0 and supports multiple environment configurations (local, development, UAT, production). Features include single-command deployment, hot-reload development servers, and automated test configuration updates.
 
 ## Project Structure
 

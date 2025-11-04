@@ -28,9 +28,14 @@ resource "aws_lambda_function" "solastra_function" {
   handler         = "com.solastra.adapters.in.lambda.StreamLambdaHandler::handleRequest"
   source_code_hash = filebase64sha256("${path.module}/../../../api/boot/build/distributions/solastra.zip")
   runtime         = "java21"
-  timeout         = 30
+  timeout         = 900
   memory_size     = 512
 
+  environment {
+    variables = {
+      JAVA_TOOL_OPTIONS = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+    }
+  }
   snap_start {
     apply_on = "PublishedVersions"
   }

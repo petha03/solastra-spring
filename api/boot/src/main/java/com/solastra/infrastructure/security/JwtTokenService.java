@@ -1,5 +1,6 @@
 package com.solastra.infrastructure.security;
 
+import com.solastra.domain.model.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -34,12 +35,12 @@ public class JwtTokenService {
      * @param role The user role
      * @return The JWT token
      */
-    public String generateToken(String userId, String email, String accountId, String role) {
+    public String generateToken(String userId, String email, String accountId, UserRole role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("email", email);
         claims.put("accountId", accountId);
-        claims.put("role", role);
+        claims.put("role", role.name());
 
         Date now = new Date();
         Date expiration = new Date(now.getTime() + expirationMs);

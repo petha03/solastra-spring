@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -16,10 +17,13 @@ public class AuthIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldRegisterNewAccount() {
+        String randomEmail = "test-" + UUID.randomUUID() + "@example.com";
+
         Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("email", "test@example.com");
+        requestBody.put("email", randomEmail);
         requestBody.put("password", "password123");
-        requestBody.put("name", "Test User");
+        requestBody.put("firstName", "Test");
+        requestBody.put("lastName", "User");
         requestBody.put("accountName", "Test Account");
 
         given()
@@ -36,7 +40,8 @@ public class AuthIntegrationTest extends BaseIntegrationTest {
     void shouldRejectRegistrationWithMissingEmail() {
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("password", "password123");
-        requestBody.put("name", "Test User");
+        requestBody.put("firstName", "Test");
+        requestBody.put("lastName", "User");
         requestBody.put("accountName", "Test Account");
 
         given()
@@ -55,7 +60,8 @@ public class AuthIntegrationTest extends BaseIntegrationTest {
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("email", "invalid-email");
         requestBody.put("password", "password123");
-        requestBody.put("name", "Test User");
+        requestBody.put("firstName", "Test");
+        requestBody.put("lastName", "User");
         requestBody.put("accountName", "Test Account");
 
         given()
@@ -74,7 +80,8 @@ public class AuthIntegrationTest extends BaseIntegrationTest {
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("email", "test@example.com");
         requestBody.put("password", "short");
-        requestBody.put("name", "Test User");
+        requestBody.put("firstName", "Test");
+        requestBody.put("lastName", "User");
         requestBody.put("accountName", "Test Account");
 
         given()
@@ -89,10 +96,11 @@ public class AuthIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldRejectRegistrationWithMissingName() {
+    void shouldRejectRegistrationWithMissingFirstName() {
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("email", "test@example.com");
         requestBody.put("password", "password123");
+        requestBody.put("lastName", "User");
         requestBody.put("accountName", "Test Account");
 
         given()
@@ -103,7 +111,7 @@ public class AuthIntegrationTest extends BaseIntegrationTest {
         .then()
             .statusCode(400)
             .body("success", equalTo(false))
-            .body("error", containsString("Name"));
+            .body("error", containsString("First name"));
     }
 
     @Test
@@ -111,7 +119,8 @@ public class AuthIntegrationTest extends BaseIntegrationTest {
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("email", "test@example.com");
         requestBody.put("password", "password123");
-        requestBody.put("name", "Test User");
+        requestBody.put("firstName", "Test");
+        requestBody.put("lastName", "User");
 
         given()
             .contentType(ContentType.JSON)
@@ -126,11 +135,12 @@ public class AuthIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldRejectDuplicateEmailRegistration() {
-        String email = "duplicate@example.com";
+        String email = "duplicate-" + UUID.randomUUID() + "@example.com";
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("email", email);
         requestBody.put("password", "password123");
-        requestBody.put("name", "Test User");
+        requestBody.put("firstName", "Test");
+        requestBody.put("lastName", "User");
         requestBody.put("accountName", "Test Account");
 
         // First registration should succeed
@@ -157,11 +167,14 @@ public class AuthIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldLoginAndReturnValidJwtToken() {
+        String randomEmail = "login-test-" + UUID.randomUUID() + "@example.com";
+
         // First register an account
         Map<String, String> registerBody = new HashMap<>();
-        registerBody.put("email", "login-test@example.com");
+        registerBody.put("email", randomEmail);
         registerBody.put("password", "password123");
-        registerBody.put("name", "Login Test User");
+        registerBody.put("firstName", "Login");
+        registerBody.put("lastName", "User");
         registerBody.put("accountName", "Login Test Account");
 
         given()
@@ -174,7 +187,7 @@ public class AuthIntegrationTest extends BaseIntegrationTest {
 
         // Now login with the same credentials
         Map<String, String> loginBody = new HashMap<>();
-        loginBody.put("email", "login-test@example.com");
+        loginBody.put("email", randomEmail);
         loginBody.put("password", "password123");
 
         String token = given()

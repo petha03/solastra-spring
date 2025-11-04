@@ -1,14 +1,12 @@
 package com.solastra.application.service;
 
 import com.solastra.application.port.in.AuthUseCase;
-import com.solastra.application.port.in.model.LoginCommand;
-import com.solastra.application.port.in.model.LoginResponse;
-import com.solastra.application.port.in.model.RegisterCommand;
-import com.solastra.application.port.in.model.RegisterResponse;
+import com.solastra.application.port.in.model.*;
 import com.solastra.application.port.out.AccountRepository;
 import com.solastra.application.port.out.UserRepository;
 import com.solastra.domain.model.Account;
 import com.solastra.domain.model.User;
+import com.solastra.domain.model.UserRole;
 import com.solastra.infrastructure.security.JwtTokenService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -82,13 +80,22 @@ public class AuthService implements AuthUseCase {
                 userId,
                 command.email(),
                 passwordHash,
-                command.name(),
-                "admin", // First user is always admin
+                command.firstName(),
+                command.lastName(),
+                command.middleName(),
+                command.prefix(),
+                command.suffix(),
+                command.username(),
+                UserRole.PLANNER, // First user defaults to PLANNER
                 accountId,
                 Instant.now()
         );
         userRepository.save(user);
 
-        return new RegisterResponse("Account created successfully");
+        UserResponse owner = UserResponse.from(user);
+        return new RegisterResponse(
+                "Account created successfully",
+                owner
+        );
     }
 }
