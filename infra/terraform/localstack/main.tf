@@ -165,12 +165,22 @@ resource "aws_s3_bucket" "vue_app" {
   bucket = "solastra-vue-app"
 }
 
+# S3 bucket for React application
+resource "aws_s3_bucket" "react_app" {
+  bucket = "solastra-react-app"
+}
+
+# S3 bucket for launcher page
+resource "aws_s3_bucket" "launcher" {
+  bucket = "solastra-launcher"
+}
+
 # S3 bucket for file uploads
 resource "aws_s3_bucket" "uploads" {
   bucket = "solastra-uploads"
 }
 
-resource "aws_s3_bucket_website_configuration" "vue_app" {
+resource "aws_s3_bucket_website_configuration" "vue_ap" {
   bucket = aws_s3_bucket.vue_app.id
 
   index_document {
@@ -182,8 +192,46 @@ resource "aws_s3_bucket_website_configuration" "vue_app" {
   }
 }
 
+resource "aws_s3_bucket_website_configuration" "react_app" {
+  bucket = aws_s3_bucket.react_app.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"
+  }
+}
+
+resource "aws_s3_bucket_website_configuration" "launcher" {
+  bucket = aws_s3_bucket.launcher.id
+
+  index_document {
+    suffix = "index.html"
+  }
+}
+
 resource "aws_s3_bucket_public_access_block" "vue_app" {
   bucket = aws_s3_bucket.vue_app.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_public_access_block" "react_app" {
+  bucket = aws_s3_bucket.react_app.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_public_access_block" "launcher" {
+  bucket = aws_s3_bucket.launcher.id
 
   block_public_acls       = false
   block_public_policy     = false
@@ -210,10 +258,40 @@ resource "aws_s3_bucket_policy" "vue_app" {
   depends_on = [aws_s3_bucket_public_access_block.vue_app]
 }
 
-output "api_endpoint" {
-  value = "${aws_api_gateway_stage.dev.invoke_url}"
+resource "aws_s3_bucket_policy" "react_app" {
+  bucket = aws_s3_bucket.react_app.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadGetObject"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.react_app.arn}/*"
+      }
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.react_app]
 }
 
-output "vue_app_url" {
-  value = "http://${aws_s3_bucket.vue_app.bucket}.s3-website.localhost.localstack.cloud:4566"
+resource "aws_s3_bucket_policy" "launcher" {
+  bucket = aws_s3_bucket.launcher.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadGetObject"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.launcher.arn}/*"
+      }
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.launcher]
 }

@@ -59,7 +59,7 @@ def localstackDir = file("${projectDir}/infra/terraform/localstack")
 
 tasks.register('recreateLocalStack', Exec) {
     group = "deployment"
-    dependsOn ':api:boot:buildLocal', ':application:vue:buildLocal'
+    dependsOn ':api:boot:buildLocal', ':application:vue:buildLocal', ':application:react:buildLocal'
 
     doFirst {
         println "Recreating LocalStack..."
@@ -71,7 +71,7 @@ tasks.register('recreateLocalStack', Exec) {
 
 tasks.register('restartLocalStack', Exec) {
     group = "deployment"
-    dependsOn ':api:boot:buildLocal', ':application:vue:buildLocal'
+    dependsOn ':api:boot:buildLocal', ':application:vue:buildLocal', ':application:react:buildLocal'
 
     doFirst {
         println "Restarting LocalStack..."
@@ -164,6 +164,49 @@ tasks.register('rebuildVueForLocalStack', Exec) {
     commandLine "npx", "vite", "build", "--mode", "localstack"
 }
 
+tasks.register('updateReactEnv', Exec) {
+    group = "deployment"
+    dependsOn applyTerraForm
+
+    doFirst {
+        println "Updating React environment with LocalStack API URL..."
+    }
+    workingDir localstackDir
+    commandLine "bash", "-c", """
+        API_URL=\$(terraform output -raw localstack_api_url 2>/dev/null || echo '')
+        if [ -n "\$API_URL" ]; then
+            echo "# LocalStack API Gateway endpoint (auto-generated)" > ${projectDir}/application/react/.env.localstack
+            echo "# Do not edit manually - this file is regenerated on each deployment" >> ${projectDir}/application/react/.env.localstack
+            echo "VITE_API_BASE_URL=\${API_URL}" >> ${projectDir}/application/react/.env.localstack
+            echo "Updated React .env.localstack with LocalStack API URL: \$API_URL"
+        else
+            echo "Warning: Could not get LocalStack API URL from Terraform"
+        fi
+    """
+}
+
+tasks.register('rebuildReactForLocalStack', Exec) {
+    group = "deployment"
+    dependsOn updateReactEnv
+
+    doFirst {
+        println "Rebuilding React app with updated environment..."
+    }
+
+    workingDir file("${projectDir}/application/react")
+    commandLine "npx", "vite", "build", "--mode", "localstack"
+}
+
+tasks.register('rebuildAppsForLocalStack') {
+    group = "deployment"
+    description = "Rebuild both Vue and React apps for LocalStack environment"
+    dependsOn rebuildVueForLocalStack, rebuildReactForLocalStack
+
+    doLast {
+        println "Both Vue and React apps have been rebuilt for LocalStack"
+    }
+}
+
 tasks.register('uploadVueToS3', Exec) {
     group = "deployment"
     dependsOn rebuildVueForLocalStack
@@ -174,16 +217,38 @@ tasks.register('uploadVueToS3', Exec) {
     commandLine "docker", "exec", "localstack-solastra", "awslocal", "s3", "sync", "/tmp/vue-app", "s3://solastra-vue-app/", "--delete"
 }
 
+tasks.register('uploadReactToS3', Exec) {
+    group = "deployment"
+    dependsOn rebuildReactForLocalStack
+
+    doFirst {
+        println "Uploading React app to S3..."
+    }
+    commandLine "docker", "exec", "localstack-solastra", "awslocal", "s3", "sync", "/tmp/react-app", "s3://solastra-react-app/", "--delete"
+}
+
+tasks.register('uploadLauncherToS3', Exec) {
+    group = "deployment"
+    dependsOn applyTerraForm
+
+    doFirst {
+        println "Uploading Launcher page to S3..."
+    }
+    commandLine "docker", "exec", "localstack-solastra", "awslocal", "s3", "sync", "/tmp/launcher", "s3://solastra-launcher/", "--delete"
+}
+
 tasks.register('deployLocal') {
     group = "deployment"
-    dependsOn uploadVueToS3, updateHttpClientEnv
+    dependsOn uploadVueToS3, uploadReactToS3, uploadLauncherToS3, updateHttpClientEnv
 
     doLast {
         println ""
         println "=".repeat(60)
         println "Deployment Complete!"
         println "=".repeat(60)
-        println "Vue App: http://solastra-vue-app.s3-website.localhost.localstack.cloud:4566"
+        println "Launcher:   http://solastra-launcher.s3-website.localhost.localstack.cloud:4566"
+        println "Vue App:    http://solastra-vue-app.s3-website.localhost.localstack.cloud:4566"
+        println "React App:  http://solastra-react-app.s3-website.localhost.localstack.cloud:4566"
         println "API Gateway: Run 'cd infra/terraform/localstack && terraform output api_gateway_url'"
         println "HTTP Client: api/tests/http-client.env.json updated with API Gateway ID"
         println "=".repeat(60)

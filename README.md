@@ -1,19 +1,23 @@
 # Solastra Spring
 
-Solastra Spring is a full-stack platform combining a Spring Boot serverless API with a Vue.js frontend. It's designed for AWS Lambda deployment with LocalStack support for local development and testing.
+Solastra Spring is a full-stack platform combining a Spring Boot serverless API with modern frontend applications. It's designed for AWS Lambda deployment with LocalStack support for local development and testing.
 
 The architecture follows hexagonal design principles, separating business logic, application services, and infrastructure adapters. The API uses Spring Boot 3.5+ with WebFlux for reactive request handling and is optimized for AWS Lambda with SnapStart support. AWS Serverless Java Container bridges Spring Boot with Lambda's execution model, enabling standard Spring patterns in a serverless environment.
 
 Infrastructure is managed as code using Terraform. LocalStack provides a local AWS environment for building and testing without connecting to AWS. The Gradle build system automates the workflow, including building components, deploying to LocalStack, and updating environment configurations.
 
-The Vue.js frontend uses Vite 6.0 and supports multiple environment configurations (local, development, UAT, production). Features include single-command deployment, hot-reload development servers, and automated test configuration updates.
+The frontend includes both Vue.js and React applications, each with Vite 6.0 build tooling and support for multiple environment configurations (local, development, UAT, production). Features include single-command deployment, hot-reload development servers, and automated test configuration updates.
 
 ## Project Structure
 
 ```
 solastra-spring/
 ├── api/boot/              # Spring Boot Lambda API
-├── application/vue/       # Vue.js SPA frontend
+├── application/           # Frontend applications
+│   ├── vue/              # Vue.js SPA frontend
+│   ├── react/            # React file upload application
+│   ├── launcher/         # Application selector page
+│   └── README.md         # Frontend documentation
 ├── infra/terraform/       # Infrastructure as Code
 └── build.gradle          # Root Gradle build configuration
 ```
@@ -47,22 +51,27 @@ solastra-spring/
 
 The API jar will be created at: `api/boot/build/libs/solastra.jar`
 
-### Build Application Only
+### Build Applications Only
 
 ```bash
-# Install dependencies
-./gradlew :application:vue:npmInstall
+# Build both Vue and React apps for LocalStack
+./gradlew rebuildAppsForLocalStack
 
-# Build for production
+# Build individual apps
+./gradlew :application:vue:npmInstall
 ./gradlew :application:vue:npmBuild
+
+./gradlew :application:react:npmInstall
+./gradlew :application:react:npmBuild
 
 # Build for specific environments
 ./gradlew :application:vue:npmBuild -Penv=dev
-./gradlew :application:vue:npmBuild -Penv=uat
-./gradlew :application:vue:npmBuild -Penv=prod
+./gradlew :application:react:npmBuild -Penv=dev
 ```
 
-The built files will be in: `application/vue/dist/`
+The built files will be in: `application/vue/dist/` and `application/react/dist/`
+
+**See [application/README.md](./application/README.md) for detailed frontend documentation.**
 
 ## Running Locally
 
@@ -76,17 +85,19 @@ This is the recommended way to run the entire stack locally with AWS services em
 ```
 
 This command will:
-1. Build the API and application
+1. Build the API and all frontend applications
 2. Start LocalStack via Docker Compose
-3. Apply Terraform configuration (creates Lambda and API Gateway)
-4. Update Vue environment with API Gateway URL
+3. Apply Terraform configuration (creates Lambda, API Gateway, and S3 buckets)
+4. Update environment files for Vue and React apps with API Gateway URL
 5. Update HTTP client test environment with API Gateway ID
-6. Rebuild Vue app with correct API endpoint
-7. Upload Vue app to S3
+6. Rebuild Vue and React apps with correct API endpoint
+7. Upload all apps (Vue, React, Launcher) to S3
 
 After deployment:
+- **Launcher**: http://solastra-launcher.s3-website.localhost.localstack.cloud:4566 (start here to choose apps)
 - **Vue App**: http://solastra-vue-app.s3-website.localhost.localstack.cloud:4566
-- **API Gateway**: The Vue app is automatically configured to use the LocalStack API Gateway endpoint
+- **React App**: http://solastra-react-app.s3-website.localhost.localstack.cloud:4566
+- **API Gateway**: All apps are automatically configured to use the LocalStack API Gateway endpoint
 - **HTTP Client Tests**: `api/tests/http-client.env.json` is automatically updated with the API Gateway ID and base URL
 - To view API Gateway URL: Run `cd infra/terraform/localstack && terraform output api_gateway_url`
 
@@ -176,26 +187,38 @@ You can run these tests directly in IntelliJ IDEA or any IDE that supports `.htt
 - SnapStart optimized for fast cold starts
 - Built as an uber JAR using Shadow plugin
 
-### Application (application/vue)
+### Applications (application/)
 
+**Vue Application (`vue/`):**
 - Vue.js 3.4+ SPA
 - Vite 6.0 for building and development
 - Environment-specific builds (localstack, dev, uat, prod)
 - API endpoint configured via environment variables
 
+**React Application (`react/`):**
+- React 18.3+ with hooks
+- Vite 6.0 for building and development
+- File upload with drag-and-drop support
+- S3 integration for file storage
+- Environment-specific builds
+
+**Launcher (`launcher/`):**
+- Static HTML page for application selection
+- Deployed to S3 for easy switching between Vue and React apps
+
 ### Infrastructure
 
 - Terraform for AWS resource management
 - Docker Compose for LocalStack
-- S3 for static hosting
+- S3 for static hosting (separate buckets for Vue, React, and Launcher)
 - API Gateway for API routing
 - Lambda for serverless compute
 
 ## Environment Variables
 
-### Vue Application
+### Frontend Applications
 
-The Vue application uses environment-specific configuration files:
+Both Vue and React applications use environment-specific configuration files:
 
 - **`.env.localstack`**: Auto-generated during `./gradlew deployLocal` with the LocalStack API Gateway URL
 - **`.env.local`**: For local development server (create manually if needed)
@@ -203,31 +226,39 @@ The Vue application uses environment-specific configuration files:
 - **`.env.uat`**: UAT environment configuration
 - **`.env.prod`**: Production environment configuration (uses `vite build` without suffix)
 
-The `.env.localstack` file is automatically created with the correct API Gateway endpoint when you run `./gradlew deployLocal`. It contains:
+The `.env.localstack` files are automatically created with the correct API Gateway endpoint when you run `./gradlew deployLocal`. They contain:
 
 ```
-VITE_API_BASE_URL=https://{api-id}.execute-api.us-east-1.amazonaws.com/dev
+VITE_API_BASE_URL=http://localhost.localstack.cloud:4566/restapis/{api-id}/dev/_user_request_
 ```
 
-**Note**: `.env.localstack` is auto-generated and should not be edited manually. It's excluded from git.
+**Note**: `.env.localstack` files are auto-generated and should not be edited manually. They're excluded from git.
 
 ## Gradle Tasks Reference
 
 | Task | Description |
 |------|-------------|
-| `build` | Build entire project |
-| `runVue` | Run Vue dev server with hot-reload on port 3972 |
-| `deployLocal` | Full LocalStack deployment (builds, deploys, uploads) |
+| `build` | Build entire project (API + all frontend apps) |
+| `deployLocal` | Full LocalStack deployment (builds, deploys all apps) |
+| `rebuildAppsForLocalStack` | Rebuild both Vue and React apps for LocalStack |
+| `rebuildVueForLocalStack` | Rebuild Vue app only for LocalStack |
+| `rebuildReactForLocalStack` | Rebuild React app only for LocalStack |
 | `uploadVueToS3` | Upload Vue app to LocalStack S3 |
-| `recreateLocalStack` | Recreate LocalStack containers |
-| `restartLocalStack` | Restart LocalStack |
+| `uploadReactToS3` | Upload React app to LocalStack S3 |
+| `uploadLauncherToS3` | Upload launcher page to LocalStack S3 |
+| `runVue` | Run Vue dev server with hot-reload on port 3972 |
+| `recreateLocalStack` | Recreate LocalStack containers from scratch |
+| `restartLocalStack` | Restart LocalStack containers |
 | `applyTerraForm` | Apply Terraform configuration |
 | `:api:boot:shadowJar` | Build API uber JAR |
 | `:api:boot:buildZip` | Build API ZIP for Lambda |
 | `:api:boot:buildLocal` | Build API for LocalStack |
-| `:application:vue:npmInstall` | Install npm dependencies |
+| `:application:vue:npmInstall` | Install Vue npm dependencies |
 | `:application:vue:npmBuild` | Build Vue app |
 | `:application:vue:buildLocal` | Build Vue app for LocalStack |
+| `:application:react:npmInstall` | Install React npm dependencies |
+| `:application:react:npmBuild` | Build React app |
+| `:application:react:buildLocal` | Build React app for LocalStack |
 
 ## Troubleshooting
 

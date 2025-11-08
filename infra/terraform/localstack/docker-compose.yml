@@ -18,3 +18,5 @@ services:
       - "./.localstack:/var/lib/localstack"
       - "./init-scripts:/etc/localstack/init/ready.d"
       - "../../../application/vue/dist:/tmp/vue-app"
+      - "../../../application/react/dist:/tmp/react-app"
+      - "../../../application/launcher:/tmp/launcher"
