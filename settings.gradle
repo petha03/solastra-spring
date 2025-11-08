@@ -2,6 +2,8 @@ rootProject.name = 'solastra'
 
 include 'api:boot'
 include 'application:vue'
+include 'application:react'
 
 project(':api:boot').projectDir = file('api/boot')
 project(':application:vue').projectDir = file('application/vue')
+project(':application:react').projectDir = file('application/react')
