@@ -1,6 +1,5 @@
 package com.solastra.adapters.in.rest;
 
-import com.solastra.adapters.in.rest.model.ErrorResponseDto;
 import com.solastra.adapters.in.rest.model.LoginRequest;
 import com.solastra.adapters.in.rest.model.LoginResponseDto;
 import com.solastra.adapters.in.rest.model.RegisterRequest;
