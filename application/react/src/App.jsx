@@ -1,19 +1,61 @@
 import { useState } from 'react'
+import { useAuth } from './contexts/AuthContext'
+import Login from './components/auth/Login'
+import Register from './components/auth/Register'
 import FileUpload from './components/FileUpload'
 import './App.css'
 
 function App() {
   const [uploadedFiles, setUploadedFiles] = useState([])
+  const [showRegister, setShowRegister] = useState(false)
+  const { user, loading, logout } = useAuth()
 
   const handleFilesUploaded = (files) => {
     setUploadedFiles(prev => [...prev, ...files])
   }
 
+  const handleSwitchToRegister = () => {
+    setShowRegister(true)
+  }
+
+  const handleSwitchToLogin = () => {
+    setShowRegister(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="app">
+        <div className="loading-screen">
+          <h2>Loading...</h2>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login/register if not authenticated
+  if (!user) {
+    if (showRegister) {
+      return <Register onSwitchToLogin={handleSwitchToLogin} />
+    }
+    return <Login onSwitchToRegister={handleSwitchToRegister} />
+  }
+
+  // Show file upload page if authenticated
   return (
     <div className="app">
       <header className="app-header">
-        <h1>File Upload</h1>
-        <p>Upload your files securely</p>
+        <div className="header-content">
+          <div>
+            <h1>File Upload</h1>
+            <p>Upload your files securely</p>
+          </div>
+          <div className="header-actions">
+            <span className="user-email">{user.email}</span>
+            <button onClick={logout} className="logout-button">
+              Logout
+            </button>
+          </div>
+        </div>
       </header>
 
       <main className="app-main">
